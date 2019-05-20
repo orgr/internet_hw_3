@@ -23,11 +23,12 @@ class Route:
     def __repr__(self):
         return self.node_list.__repr__()
 
-    def union(self, other: 'Route') -> []:
-        if self.node_list[-1] == other.node_list[-1] \
-                and self.ends_with_peer_connection != other.ends_with_peer_connection \
-                and len(set(self.node_list[:-1]).intersection(set(other.node_list))) == 0:
-            return self.node_list[:-1] + other.node_list[::-1]
+    @staticmethod
+    def union(a: 'Route', b: 'Route') -> []:
+        if a.node_list[-1] == b.node_list[-1] \
+                and not (a.ends_with_peer_connection and b.ends_with_peer_connection) \
+                and len(set(a.node_list[:-1]).intersection(set(b.node_list))) == 0:
+            return a.node_list[:-1] + b.node_list[::-1]
         return None
 
 
@@ -79,14 +80,13 @@ if __name__ == '__main__':
 
     def fill_half_routes(current_route: list, peer_step_happened: bool):
         """
-        fills possible _half_routes. half route is a route from a leave through
+        fills possible _half_routes. half route is a route from a node through
         customer-provider links until the first peer connection
         :param current_route:
         :param peer_step_happened:
         :return:
         """
         node = current_route[-1]  # type: Node
-        result = []
         if peer_step_happened:
             possible_half_routes.append(Route(current_route, peer_step_happened))
             return
@@ -111,20 +111,28 @@ if __name__ == '__main__':
             possible_half_routes.append(Route(current_route, peer_step_happened))
 
 
-    """ use fill_half_routes on all leaves """
-    # for node in leaves:
-    #     fill_half_routes([node], peer_step_happened=False)
+
     def uncheck_all():
         for node in nodes.values():
             for i, _ in enumerate(node.peers_checked):
                 node.peers_checked[i] = False
+
+
+    """ use fill_half_routes on all nodes """
     for node in nodes.values():
         uncheck_all()
         fill_half_routes([node], peer_step_happened=False)
 
     """ for all half_route permutations, try to union(failure will be None) """
-    full_routes = [route_tuple[0].union(route_tuple[1]) for route_tuple in
-                   list(itertools.permutations(possible_half_routes, 2)) if route_tuple[0].union(route_tuple[1])]
+    full_routes = list()
+    for route_tuple in itertools.permutations(possible_half_routes, 2):
+        union = Route.union(route_tuple[0], route_tuple[1])
+        if union:
+            full_routes.append(union)
+    #
+    #
+    # full_routes = [Route.union(route_tuple[0],route_tuple[1]) for route_tuple in
+    #                list(itertools.permutations(possible_half_routes, 2)) if Route.union(route_tuple[0],route_tuple[1])]
 
     all_routes = [route.node_list for route in possible_half_routes] + [ [node.id for node in node_list] for node_list in full_routes]
     for possible_route in all_routes:
