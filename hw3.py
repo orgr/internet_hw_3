@@ -57,29 +57,30 @@ leaves = [node for node in nodes.values() if len(node.customers) == 0]
 possible_routes = list()
 
 
-def add_path_steps(current_route: list, provider_step_allowed: bool):
+def add_path_steps(current_route: list, peer_step_happened: bool):
     node = current_route[-1]  # type: Node
     result = []
-    if provider_step_allowed:
+    if not peer_step_happened:
         for provider in node.providers:
             provider_node = nodes[provider]
-            result += [add_path_steps(current_route + [provider_node], provider_step_allowed)]
+            result += [add_path_steps(current_route + [provider_node], peer_step_happened)]
 
-    for peer in node.peers:
+        for peer in node.peers:
 
-        # do not go back to the peer we just came from
-        if len(current_route) >= 2 and current_route[-2].id == peer:
-            continue
+            # do not go back to the peer we just came from
+            if len(current_route) >= 2 and current_route[-2].id == peer:
+                continue
 
-        peer_index_in_node = node.peers.index(peer)
-        if not node.peers_checked[peer_index_in_node]:
-            node.peers_checked[peer_index_in_node] = True
-            peer_node = nodes[peer]
-            result += add_path_steps(current_route + [peer_node], False)
+            peer_index_in_node = node.peers.index(peer)
+            if not node.peers_checked[peer_index_in_node]:
+                node.peers_checked[peer_index_in_node] = True
+                peer_node = nodes[peer]
+                result += add_path_steps(current_route + [peer_node], False)
     if len(node.providers) == 0:
         return current_route
     else:
         return result
+
 
 def clear_checks():
     for node in nodes.values():
@@ -88,9 +89,9 @@ def clear_checks():
 
 
 for node in leaves:
-    # clear_checks()
-    for list_list_node in add_path_steps([node], provider_step_allowed=True):
-
+    clear_checks()
+    for list_list_node in add_path_steps([node], peer_step_happened=False):
+        # print(list_node.id)
         for list_node in list_list_node:
             print([x.id for x in list_node])
             # print([x.id for x in list_node if isinstance(x, Node)])
