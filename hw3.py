@@ -129,10 +129,6 @@ if __name__ == '__main__':
         union = Route.union(route_tuple[0], route_tuple[1])
         if union:
             full_routes.append(union)
-    #
-    #
-    # full_routes = [Route.union(route_tuple[0],route_tuple[1]) for route_tuple in
-    #                list(itertools.permutations(possible_half_routes, 2)) if Route.union(route_tuple[0],route_tuple[1])]
 
     all_routes = [route.node_list for route in possible_half_routes] + [ [node.id for node in node_list] for node_list in full_routes]
     for possible_route in all_routes:
